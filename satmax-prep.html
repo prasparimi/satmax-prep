@@ -1,0 +1,1461 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PrepSAT | Digital SAT Question Bank & Exam Simulator</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        sat: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#2563eb',
+                            600: '#1d4ed8',
+                            700: '#1e40af',
+                            800: '#1e3a8a',
+                            900: '#0f172a',
+                            950: '#0b0f19'
+                        },
+                        accent: {
+                            emerald: '#10b981',
+                            amber: '#f59e0b',
+                            purple: '#8b5cf6',
+                            rose: '#f43f5e'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- FontAwesome & Phosphor Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b0f19;
+            color: #f3f4f6;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+
+        /* Desmos Plot Canvas Simulation Style */
+        .grid-bg {
+            background-image: linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        /* Glassmorphism effects */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        
+        .glass-card {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Bluebook Test Interface Specifics */
+        .bluebook-nav-btn {
+            transition: all 0.15s ease-in-out;
+        }
+        .bluebook-nav-btn.active {
+            border-color: #3b82f6;
+            background-color: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+        }
+        .bluebook-nav-btn.answered {
+            background-color: #1e293b;
+            color: #94a3b8;
+        }
+        .bluebook-nav-btn.flagged {
+            position: relative;
+        }
+        .bluebook-nav-btn.flagged::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 8px;
+            height: 8px;
+            background-color: #f43f5e;
+            border-radius: 50%;
+        }
+
+        /* Animations */
+        @keyframes pulse-subtle {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .animate-pulse-subtle {
+            animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-950 text-slate-100 antialiased selection:bg-blue-600 selection:text-white">
+
+    <header class="sticky top-0 z-40 w-full glass-panel border-b border-slate-800/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Brand Logo -->
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-blue-500/20">
+                        S
+                    </div>
+                    <div>
+                        <span class="font-extrabold text-xl tracking-tight bg-gradient-to-r from-white via-slate-200 to-blue-400 bg-clip-text text-transparent">CookSAT</span>
+                        <span class="text-xs bg-blue-500/10 text-blue-400 font-semibold px-2 py-0.5 rounded-full border border-blue-500/20 ml-2">v2.4 PRO</span>
+                    </div>
+                </div>
+
+                <!-- Main Desktop Navigation -->
+                <nav class="hidden md:flex items-center space-x-1">
+                    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-link px-4 py-2 rounded-lg text-sm font-medium transition-all text-blue-400 bg-blue-500/10 border border-blue-500/20">
+                        <i class="fa-solid fa-chart-pie mr-2"></i>Dashboard
+                    </button>
+                    <button onclick="switchTab('question-bank')" id="nav-question-bank" class="nav-link px-4 py-2 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
+                        <i class="fa-solid fa-book-open mr-2"></i>Question Bank
+                    </button>
+                    <button onclick="startMockTestModal()" id="nav-mock-test" class="nav-link px-4 py-2 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
+                        <i class="fa-solid fa-laptop-code mr-2"></i>Bluebook Simulator
+                    </button>
+                    <button onclick="switchTab('flashcards')" id="nav-flashcards" class="nav-link px-4 py-2 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
+                        <i class="fa-solid fa-layer-group mr-2"></i>Vocab Cards
+                    </button>
+                </nav>
+
+                <!-- User Quick Stats Header Badges -->
+                <div class="flex items-center gap-3">
+                    <!-- Streak -->
+                    <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold" title="Daily Practice Streak">
+                        <i class="fa-solid fa-fire text-amber-500 text-sm animate-bounce"></i>
+                        <span id="header-streak-count">5</span> Days
+                    </div>
+                    <!-- Target Score -->
+                    <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-xs font-medium text-slate-300">
+                        <i class="fa-solid fa-bullseye text-blue-400"></i>
+                        <span>Target: <strong class="text-white font-bold" id="header-target-score">1550</strong></span>
+                    </div>
+                    <!-- Settings/Reset -->
+                    <button onclick="openSettingsModal()" class="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors" title="Settings & Local Data">
+                        <i class="fa-solid fa-gear"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Nav Bar (Bottom pinned) -->
+        <div class="md:hidden flex items-center justify-around bg-slate-900 border-t border-slate-800 py-2 px-1">
+            <button onclick="switchTab('dashboard')" class="flex flex-col items-center py-1 px-3 text-xs text-blue-400 font-medium">
+                <i class="fa-solid fa-chart-pie text-lg mb-0.5"></i>
+                Dashboard
+            </button>
+            <button onclick="switchTab('question-bank')" class="flex flex-col items-center py-1 px-3 text-xs text-slate-400 font-medium">
+                <i class="fa-solid fa-book-open text-lg mb-0.5"></i>
+                Q-Bank
+            </button>
+            <button onclick="startMockTestModal()" class="flex flex-col items-center py-1 px-3 text-xs text-slate-400 font-medium">
+                <i class="fa-solid fa-laptop-code text-lg mb-0.5"></i>
+                Mock
+            </button>
+            <button onclick="switchTab('flashcards')" class="flex flex-col items-center py-1 px-3 text-xs text-slate-400 font-medium">
+                <i class="fa-solid fa-layer-group text-lg mb-0.5"></i>
+                Vocab
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT AREA CONTAINER -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <section id="view-dashboard" class="space-y-8">
+            <!-- Top Banner: Predicted Score & Quick Stats Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Score Prediction Hero Box -->
+                <div class="lg:col-span-1 rounded-2xl bg-gradient-to-br from-blue-900/60 via-slate-900 to-indigo-950/80 p-6 border border-blue-500/20 shadow-xl relative overflow-hidden flex flex-col justify-between">
+                    <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-xs font-bold uppercase tracking-wider text-blue-400 bg-blue-500/10 px-2.5 py-1 rounded-md border border-blue-500/20">
+                                AI Predicted Score
+                            </span>
+                            <span class="text-xs text-slate-400"><i class="fa-regular fa-clock mr-1"></i>Updated today</span>
+                        </div>
+                        <div class="flex items-baseline gap-3">
+                            <h2 class="text-5xl font-black text-white tracking-tight" id="dash-predicted-score">1480</h2>
+                            <span class="text-lg text-slate-400 font-medium">/ 1600</span>
+                        </div>
+                        <div class="mt-4 grid grid-cols-2 gap-3 pt-4 border-t border-slate-800">
+                            <div>
+                                <div class="text-xs text-slate-400 mb-0.5">Math Section</div>
+                                <div class="text-xl font-bold text-emerald-400" id="dash-math-score">760 <span class="text-xs text-slate-500">/ 800</span></div>
+                            </div>
+                            <div>
+                                <div class="text-xs text-slate-400 mb-0.5">Reading & Writing</div>
+                                <div class="text-xl font-bold text-purple-400" id="dash-rw-score">720 <span class="text-xs text-slate-500">/ 800</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-300">
+                        <span>Readiness for Official Test:</span>
+                        <span class="font-bold text-emerald-400"><i class="fa-solid fa-circle-check mr-1"></i>High Confidence</span>
+                    </div>
+                </div>
+
+                <!-- 4 Quick Metric Cards -->
+                <div class="lg:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <!-- Metric 1 -->
+                    <div class="glass-card rounded-2xl p-5 flex flex-col justify-between">
+                        <div class="flex items-center justify-between text-slate-400 text-xs font-medium">
+                            <span>Questions Solved</span>
+                            <i class="fa-solid fa-circle-question text-blue-400 text-base"></i>
+                        </div>
+                        <div class="mt-4">
+                            <div class="text-3xl font-extrabold text-white" id="dash-total-solved">142</div>
+                            <div class="text-xs text-slate-400 mt-1"><span class="text-emerald-400 font-semibold"><i class="fa-solid fa-arrow-up text-3xs"></i> +18</span> this week</div>
+                        </div>
+                    </div>
+                    <!-- Metric 2 -->
+                    <div class="glass-card rounded-2xl p-5 flex flex-col justify-between">
+                        <div class="flex items-center justify-between text-slate-400 text-xs font-medium">
+                            <span>Overall Accuracy</span>
+                            <i class="fa-solid fa-bullseye text-emerald-400 text-base"></i>
+                        </div>
+                        <div class="mt-4">
+                            <div class="text-3xl font-extrabold text-white" id="dash-accuracy">82%</div>
+                            <div class="text-xs text-slate-400 mt-1"><span class="text-emerald-400 font-semibold">+3%</span> vs last test</div>
+                        </div>
+                    </div>
+                    <!-- Metric 3 -->
+                    <div class="glass-card rounded-2xl p-5 flex flex-col justify-between">
+                        <div class="flex items-center justify-between text-slate-400 text-xs font-medium">
+                            <span>Study Time</span>
+                            <i class="fa-solid fa-stopwatch text-amber-400 text-base"></i>
+                        </div>
+                        <div class="mt-4">
+                            <div class="text-3xl font-extrabold text-white" id="dash-study-time">14.5<span class="text-sm font-normal text-slate-400 ml-1">hrs</span></div>
+                            <div class="text-xs text-slate-400 mt-1">Avg 45m/day</div>
+                        </div>
+                    </div>
+                    <!-- Metric 4 -->
+                    <div class="glass-card rounded-2xl p-5 flex flex-col justify-between">
+                        <div class="flex items-center justify-between text-slate-400 text-xs font-medium">
+                            <span>Flagged / Review</span>
+                            <i class="fa-solid fa-bookmark text-rose-400 text-base"></i>
+                        </div>
+                        <div class="mt-4">
+                            <div class="text-3xl font-extrabold text-white" id="dash-flagged-count">7</div>
+                            <button onclick="switchTab('question-bank', 'flagged')" class="text-xs text-rose-400 hover:underline mt-1 block text-left">
+                                Practice flagged <i class="fa-solid fa-arrow-right text-3xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Domain Mastery Breakdown Section -->
+            <div class="space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-white tracking-tight">Domain Mastery Breakdown</h3>
+                        <p class="text-sm text-slate-400">Detailed performance across College Board Digital SAT Content Domains</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="switchTab('question-bank')" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-semibold transition-all shadow-lg shadow-blue-600/20">
+                            <i class="fa-solid fa-play mr-2"></i>Start Adaptive Practice
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Math Domains Card -->
+                    <div class="glass-panel rounded-2xl p-6 border border-slate-800">
+                        <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-800">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold">
+                                    <i class="fa-solid fa-calculator"></i>
+                                </div>
+                                <h4 class="font-bold text-lg text-white">Math Domains</h4>
+                            </div>
+                            <span class="text-xs text-slate-400 font-mono">Overall Math: 88%</span>
+                        </div>
+
+                        <div class="space-y-5">
+                            <!-- Math Domain 1 -->
+                            <div>
+                                <div class="flex justify-between text-sm mb-1.5">
+                                    <span class="text-slate-300 font-medium">Algebra (35%)</span>
+                                    <span class="text-emerald-400 font-bold">90%</span>
+                                </div>
+                                <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                                    <div class="bg-gradient-to-r from-emerald-500 to-teal-400 h-2.5 rounded-full" style="width: 90%"></div>
+                                </div>
+                                <p class="text-xs text-slate-500 mt-1">Linear equations, systems, functions</p>
+                            </div>
+
+                            <!-- Math Domain 2 -->
+                            <div>
+                                <div class="flex justify-between text-sm mb-1.5">
+                                    <span class="text-slate-300 font-medium">Advanced Math (35%)</span>
+                                    <span class="text-emerald-400 font-bold">84%</span>
+                                </div>
+                                <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                                    <div class="bg-gradient-to-r from-emerald-500 to-teal-400 h-2.5 rounded-full" style="width: 84%"></div>
+                                </div>
+                                <p class="text-xs text-slate-500 mt-1">Nonlinear equations, quadratics, polynomials</p>
+                            </div>
+
+                            <!-- Math Domain 3 -->
+                            <div>
+                                <div class="flex justify-between text-sm mb-1.5">
+                                    <span class="text-slate-300 font-medium">Problem-Solving & Data Analysis (15%)</span>
+                                    <span class="text-amber-400 font-bold">78%</span>
+                                </div>
+                                <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                                    <div class="bg-gradient-to-r from-amber-500 to-orange-400 h-2.5 rounded-full" style="width: 78%"></div>
+                                </div>
+                                <p class="text-xs text-slate-500 mt-1">Ratios, percentages, statistics, probability</p>
+                            </div>
+
+                            <!-- Math Domain 4 -->
+                            <div>
+                                <div class="flex justify-between text-sm mb-1.5">
+                                    <span class="text-slate-300 font-medium">Geometry & Trigonometry (15%)</span>
+                                    <span class="text-emerald-400 font-bold">88%</span>
+                                </div>
+                                <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                                    <div class="bg-gradient-to-r from-emerald-500 to-teal-400 h-2.5 rounded-full" style="width: 88%"></div>
+                                </div>
+                                <p class="text-xs text-slate-500 mt-1">Area, volume, triangles, circles, trig functions</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Reading & Writing Domains Card -->
+                    <div class="glass-panel rounded-2xl p-6 border border-slate-800">
+                        <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-800">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center font-bold">
+                                    <i class="fa-solid fa-pen-nib"></i>
+                                </div>
+                                <h4 class="font-bold text-lg text-white">Reading & Writing Domains</h4>
+                            </div>
+                            <span class="text-xs text-slate-400 font-mono">Overall R&W: 79%</span>
+                        </div>
+
+                        <div class="space-y-5">
+                            <!-- R&W Domain 1 -->
+                            <div>
+                                <div class="flex justify-between text-sm mb-1.5">
+                                    <span class="text-slate-300 font-medium">Craft and Structure (28%)</span>
+                                    <span class="text-purple-400 font-bold">82%</span>
+                                </div>
+                                <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                                    <div class="bg-gradient-to-r from-purple-500 to-indigo-400 h-2.5 rounded-full" style="width: 82%"></div>
+                                </div>
+                                <p class="text-xs text-slate-500 mt-1">Words in context, text structure & purpose</p>
+                            </div>
+
+                            <!-- R&W Domain 2 -->
+                            <div>
+                                <div class="flex justify-between text-sm mb-1.5">
+                                    <span class="text-slate-300 font-medium">Information and Ideas (26%)</span>
+                                    <span class="text-amber-400 font-bold">75%</span>
+                                </div>
+                                <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                                    <div class="bg-gradient-to-r from-amber-500 to-orange-400 h-2.5 rounded-full" style="width: 75%"></div>
+                                </div>
+                                <p class="text-xs text-slate-500 mt-1">Central ideas, command of evidence, inferences</p>
+                            </div>
+
+                            <!-- R&W Domain 3 -->
+                            <div>
+                                <div class="flex justify-between text-sm mb-1.5">
+                                    <span class="text-slate-300 font-medium">Standard English Conventions (26%)</span>
+                                    <span class="text-purple-400 font-bold">85%</span>
+                                </div>
+                                <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                                    <div class="bg-gradient-to-r from-purple-500 to-indigo-400 h-2.5 rounded-full" style="width: 85%"></div>
+                                </div>
+                                <p class="text-xs text-slate-500 mt-1">Boundaries, sentence structure, agreement</p>
+                            </div>
+
+                            <!-- R&W Domain 4 -->
+                            <div>
+                                <div class="flex justify-between text-sm mb-1.5">
+                                    <span class="text-slate-300 font-medium">Expression of Ideas (20%)</span>
+                                    <span class="text-purple-400 font-bold">80%</span>
+                                </div>
+                                <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                                    <div class="bg-gradient-to-r from-purple-500 to-indigo-400 h-2.5 rounded-full" style="width: 80%"></div>
+                                </div>
+                                <p class="text-xs text-slate-500 mt-1">Rhetorical synthesis, transitions</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Daily SAT Challenge Widget -->
+            <div class="glass-panel rounded-2xl p-6 border border-amber-500/30 bg-gradient-to-r from-amber-950/20 via-slate-900 to-slate-900 relative">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-2xl border border-amber-500/30">
+                            <i class="fa-solid fa-trophy"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h4 class="text-lg font-bold text-white">Daily SAT Challenge</h4>
+                                <span class="bg-amber-500/20 text-amber-300 text-3xs font-black uppercase px-2 py-0.5 rounded border border-amber-500/30">+50 XP</span>
+                            </div>
+                            <p class="text-sm text-slate-400">Solve today's high-yield Math problem to maintain your 5-day streak!</p>
+                        </div>
+                    </div>
+                    <button onclick="loadDailyQuestion()" class="w-full sm:w-auto px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl transition-all shadow-lg shadow-amber-500/10">
+                        Solve Today's Challenge
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-question-bank" class="hidden space-y-6">
+            <!-- Filtering Header Bar -->
+            <div class="glass-panel rounded-2xl p-4 md:p-6 border border-slate-800 space-y-4">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-white">SAT Question Bank</h2>
+                        <p class="text-xs text-slate-400">Filter through hundreds of official-style College Board Digital SAT questions</p>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-3">
+                        <button onclick="resetFilters()" class="text-xs text-slate-400 hover:text-white transition-colors">
+                            <i class="fa-solid fa-rotate-left mr-1"></i>Reset Filters
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filter Selectors Grid -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <!-- Subject Filter -->
+                    <div>
+                        <label class="block text-3xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Subject</label>
+                        <select id="filter-subject" onchange="applyQuestionFilters()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:border-blue-500 focus:outline-none">
+                            <option value="all">All Subjects</option>
+                            <option value="math">Math</option>
+                            <option value="reading">Reading & Writing</option>
+                        </select>
+                    </div>
+
+                    <!-- Domain Filter -->
+                    <div>
+                        <label class="block text-3xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Domain</label>
+                        <select id="filter-domain" onchange="applyQuestionFilters()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:border-blue-500 focus:outline-none">
+                            <option value="all">All Domains</option>
+                            <option value="algebra">Algebra</option>
+                            <option value="advanced_math">Advanced Math</option>
+                            <option value="problem_solving">Problem-Solving</option>
+                            <option value="geometry">Geometry & Trig</option>
+                            <option value="craft_structure">Craft & Structure</option>
+                            <option value="information_ideas">Information & Ideas</option>
+                            <option value="conventions">Standard Conventions</option>
+                        </select>
+                    </div>
+
+                    <!-- Difficulty Filter -->
+                    <div>
+                        <label class="block text-3xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Difficulty</label>
+                        <select id="filter-difficulty" onchange="applyQuestionFilters()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:border-blue-500 focus:outline-none">
+                            <option value="all">All Difficulties</option>
+                            <option value="easy">Easy</option>
+                            <option value="medium">Medium</option>
+                            <option value="hard">Hard</option>
+                        </select>
+                    </div>
+
+                    <!-- Status Filter -->
+                    <div>
+                        <label class="block text-3xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Status</label>
+                        <select id="filter-status" onchange="applyQuestionFilters()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:border-blue-500 focus:outline-none">
+                            <option value="all">All Questions</option>
+                            <option value="unanswered">Unanswered</option>
+                            <option value="flagged">Flagged for Review</option>
+                            <option value="incorrect">Incorrect</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Question Viewer Box -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Question Main Card -->
+                <div class="lg:col-span-8 space-y-6">
+                    <div id="qbank-container" class="glass-panel rounded-2xl p-6 md:p-8 border border-slate-800 relative">
+                        <!-- Question Header Bar -->
+                        <div class="flex items-center justify-between pb-4 mb-6 border-b border-slate-800">
+                            <div class="flex items-center gap-2">
+                                <span id="q-subject-badge" class="px-2.5 py-1 rounded-md text-xs font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">Math</span>
+                                <span id="q-domain-badge" class="px-2.5 py-1 rounded-md text-xs font-medium bg-slate-800 text-slate-300">Algebra</span>
+                                <span id="q-difficulty-badge" class="px-2 py-0.5 rounded text-3xs font-extrabold uppercase bg-amber-500/10 text-amber-400 border border-amber-500/20">Medium</span>
+                            </div>
+
+                            <button id="btn-flag-q" onclick="toggleFlagCurrentQuestion()" class="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-rose-400 transition-colors">
+                                <i class="fa-regular fa-bookmark" id="flag-icon"></i>
+                                <span id="flag-text">Flag for Review</span>
+                            </button>
+                        </div>
+
+                        <!-- Reading Passage Block (Hidden if Math) -->
+                        <div id="passage-container" class="hidden mb-6 p-4 rounded-xl bg-slate-900/80 border border-slate-800 text-slate-300 text-sm leading-relaxed max-h-60 overflow-y-auto">
+                            <p id="q-passage-text">Loading passage...</p>
+                        </div>
+
+                        <!-- Question Stem -->
+                        <div class="text-base md:text-lg font-medium text-slate-100 mb-6 leading-relaxed" id="q-stem-text">
+                            Loading question text...
+                        </div>
+
+                        <!-- Multiple Choice Options Grid -->
+                        <div class="space-y-3" id="q-options-container">
+                            <!-- Options injected dynamically -->
+                        </div>
+
+                        <!-- Action Controls (Check / Next / Previous) -->
+                        <div class="mt-8 pt-6 border-t border-slate-800 flex items-center justify-between">
+                            <button onclick="prevQuestion()" class="px-4 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 text-sm font-semibold transition-all">
+                                <i class="fa-solid fa-chevron-left mr-2"></i>Previous
+                            </button>
+
+                            <div class="flex gap-2">
+                                <button id="btn-check-answer" onclick="checkAnswer()" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-600/20">
+                                    Check Answer
+                                </button>
+                                <button onclick="nextQuestion()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-sm font-semibold transition-all">
+                                    Next <i class="fa-solid fa-chevron-right ml-2"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Answer Explanation & Desmos Shortcuts Panel (Revealed after check) -->
+                    <div id="explanation-panel" class="hidden glass-panel rounded-2xl p-6 border border-slate-800 space-y-4">
+                        <!-- Explanation Tab Headers -->
+                        <div class="flex border-b border-slate-800 gap-4">
+                            <button onclick="switchExplanationTab('step-by-step')" id="tab-btn-step" class="pb-3 text-sm font-bold text-blue-400 border-b-2 border-blue-500">
+                                <i class="fa-solid fa-book-open mr-2"></i>Step-by-Step Solution
+                            </button>
+                            <button onclick="switchExplanationTab('desmos')" id="tab-btn-desmos" class="pb-3 text-sm font-semibold text-slate-400 hover:text-slate-200">
+                                <i class="fa-solid fa-calculator mr-2 text-emerald-400"></i>Desmos Calculator Shortcut
+                            </button>
+                        </div>
+
+                        <!-- Step By Step Content -->
+                        <div id="explanation-step-content" class="text-sm text-slate-300 leading-relaxed space-y-3 pt-2">
+                            <p id="explanation-text">Explanation details...</p>
+                        </div>
+
+                        <!-- Desmos Shortcut Content -->
+                        <div id="explanation-desmos-content" class="hidden text-sm text-slate-300 leading-relaxed space-y-3 pt-2">
+                            <div class="p-3 rounded-lg bg-emerald-950/20 border border-emerald-500/20 text-emerald-300 font-mono text-xs" id="desmos-shortcut-text">
+                                Desmos trick details...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Side: Sidebar Navigation & Progress -->
+                <div class="lg:col-span-4 space-y-6">
+                    <div class="glass-panel rounded-2xl p-5 border border-slate-800">
+                        <h3 class="text-sm font-bold text-white mb-3">Question Navigator</h3>
+                        <div class="grid grid-cols-5 gap-2" id="q-navigator-grid">
+                            <!-- Navigator Buttons Injected Dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Quick Desmos Graphing Calculator Widget (Embedded) -->
+                    <div class="glass-panel rounded-2xl p-5 border border-slate-800 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-white"><i class="fa-solid fa-calculator text-emerald-400 mr-2"></i>Desmos Graphic Tool</span>
+                            <span class="text-3xs bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 font-mono">SAT APPROVED</span>
+                        </div>
+                        <!-- Simulated Interactive Canvas Plotting Tool -->
+                        <div class="w-full h-48 bg-slate-900 rounded-xl grid-bg border border-slate-800 relative flex flex-col justify-between p-3 overflow-hidden">
+                            <!-- Axis Lines -->
+                            <div class="absolute inset-y-0 left-1/2 w-0.5 bg-slate-700/60 pointer-events-none"></div>
+                            <div class="absolute inset-x-0 top-1/2 h-0.5 bg-slate-700/60 pointer-events-none"></div>
+                            
+                            <!-- Graph Parabola Sample SVG Overlay -->
+                            <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 200 150">
+                                <path d="M 20,20 Q 100,140 180,20" stroke="#10b981" stroke-width="2.5" fill="none" />
+                                <circle cx="100" cy="140" r="4" fill="#38bdf8" />
+                            </svg>
+
+                            <div class="relative z-10 text-3xs font-mono text-emerald-400 bg-slate-950/80 px-2 py-1 rounded w-fit border border-slate-800">
+                                f(x) = x² - 4x + 3
+                            </div>
+                            <div class="relative z-10 flex justify-between text-3xs text-slate-500">
+                                <span>(-10,10)</span>
+                                <span class="text-slate-400">Vertex: (2, -1)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-flashcards" class="hidden space-y-6">
+            <div class="glass-panel rounded-2xl p-6 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-white">High-Frequency SAT Vocabulary</h2>
+                    <p class="text-xs text-slate-400">Master essential words for Digital SAT Reading & Writing Craft & Structure modules</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="text-xs text-slate-400">Mastery Progress: <strong class="text-emerald-400" id="vocab-mastery-count">12 / 20</strong></span>
+                </div>
+            </div>
+
+            <!-- Interactive Flashcard Component -->
+            <div class="max-w-xl mx-auto py-6">
+                <div id="flashcard" onclick="flipFlashcard()" class="w-full h-80 rounded-3xl glass-panel border border-slate-700 p-8 flex flex-col justify-between cursor-pointer transition-all duration-300 hover:border-blue-500/50 shadow-2xl relative select-none">
+                    
+                    <div class="flex justify-between items-center text-xs text-slate-400">
+                        <span class="bg-purple-500/10 text-purple-400 font-bold px-2.5 py-1 rounded-md border border-purple-500/20" id="card-type">ADJECTIVE</span>
+                        <span id="card-status-badge" class="text-amber-400"><i class="fa-solid fa-clock-rotate-left mr-1"></i>Learning</span>
+                    </div>
+
+                    <!-- Front / Back Toggleable Content -->
+                    <div class="text-center py-4">
+                        <h3 class="text-3xl font-black text-white tracking-wide mb-2" id="card-word">Anomalous</h3>
+                        <p class="text-slate-400 text-sm font-mono italic" id="card-pronunciation">/ əˈnämələs /</p>
+                        
+                        <!-- Back Answer (Hidden until flipped) -->
+                        <div id="card-back-content" class="hidden mt-4 pt-4 border-t border-slate-800 space-y-2">
+                            <p class="text-base text-slate-200 font-medium" id="card-definition">Deviating from what is standard, normal, or expected.</p>
+                            <p class="text-xs text-slate-400 italic" id="card-example">"The scientist noted an anomalous result in the experimental trial."</p>
+                        </div>
+                    </div>
+
+                    <div class="text-center text-xs text-slate-500">
+                        <i class="fa-solid fa-rotate mr-1"></i>Click card to flip
+                    </div>
+                </div>
+
+                <!-- Card Action Controls -->
+                <div class="flex items-center justify-between gap-4 mt-6">
+                    <button onclick="prevVocabCard()" class="p-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl transition-all">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                    
+                    <div class="flex items-center gap-3">
+                        <button onclick="markVocabMastery(false)" class="px-4 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-xl text-xs font-bold border border-rose-500/20 transition-all">
+                            Needs Review
+                        </button>
+                        <button onclick="markVocabMastery(true)" class="px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-xl text-xs font-bold border border-emerald-500/20 transition-all">
+                            Mark Mastered
+                        </button>
+                    </div>
+
+                    <button onclick="nextVocabCard()" class="p-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl transition-all">
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <div id="mock-test-modal" class="fixed inset-0 z-50 bg-slate-950 text-slate-100 hidden flex flex-col overflow-hidden">
+        <!-- Bluebook Test Header -->
+        <header class="bg-slate-900 border-b border-slate-800 px-6 py-3 flex items-center justify-between select-none">
+            <div class="flex items-center gap-4">
+                <span class="font-extrabold text-base tracking-tight text-white">Digital SAT Mock Test</span>
+                <span class="text-xs bg-slate-800 text-slate-300 px-3 py-1 rounded-full border border-slate-700" id="bluebook-module-title">
+                    Module 1: Math
+                </span>
+            </div>
+
+            <!-- Countdown Timer Header Center -->
+            <div class="flex items-center gap-3 bg-slate-950 border border-slate-800 px-4 py-1.5 rounded-xl">
+                <i class="fa-regular fa-clock text-blue-400"></i>
+                <span id="test-timer-display" class="font-mono text-lg font-bold text-white">35:00</span>
+                <button onclick="toggleTimerVisibility()" class="text-xs text-slate-400 hover:text-white ml-2">
+                    <i class="fa-solid fa-eye-slash" id="timer-toggle-icon"></i>
+                </button>
+            </div>
+
+            <!-- Exam Utilities Buttons -->
+            <div class="flex items-center gap-3">
+                <button onclick="openDesmosModal()" class="px-3 py-1.5 bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 rounded-lg text-xs font-bold border border-emerald-500/30 flex items-center gap-1.5">
+                    <i class="fa-solid fa-calculator"></i> Calculator
+                </button>
+                <button onclick="openFormulaSheetModal()" class="px-3 py-1.5 bg-slate-800 text-slate-300 hover:bg-slate-700 rounded-lg text-xs font-bold border border-slate-700 flex items-center gap-1.5">
+                    <i class="fa-solid fa-square-root-variable"></i> Reference
+                </button>
+                <button onclick="submitMockTest()" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition-all">
+                    Submit Exam
+                </button>
+            </div>
+        </header>
+
+        <!-- Bluebook Test Body -->
+        <div class="flex-1 max-w-5xl w-full mx-auto p-6 overflow-y-auto flex flex-col justify-between space-y-6">
+            <div class="space-y-6">
+                <!-- Question Number & Flag Toggle Header -->
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <div class="flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-lg bg-blue-600 text-white font-extrabold flex items-center justify-center text-sm" id="bluebook-q-index">
+                            1
+                        </span>
+                        <span class="text-xs text-slate-400 uppercase tracking-widest font-semibold" id="bluebook-q-domain">Math • Algebra</span>
+                    </div>
+
+                    <button onclick="toggleBluebookFlag()" id="bluebook-flag-btn" class="text-xs font-semibold text-slate-400 hover:text-rose-400 flex items-center gap-1.5">
+                        <i class="fa-regular fa-bookmark" id="bluebook-flag-icon"></i> Mark for Review
+                    </button>
+                </div>
+
+                <!-- Test Question Content -->
+                <div class="text-lg text-slate-100 font-medium leading-relaxed" id="bluebook-q-stem">
+                    Loading exam question...
+                </div>
+
+                <!-- Options -->
+                <div class="space-y-3 max-w-2xl" id="bluebook-options-container">
+                    <!-- Bluebook options injected dynamically -->
+                </div>
+            </div>
+
+            <!-- Bluebook Bottom Navigation Bar -->
+            <div class="border-t border-slate-800 pt-4 flex items-center justify-between">
+                <button onclick="prevBluebookQuestion()" class="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold">
+                    <i class="fa-solid fa-arrow-left mr-2"></i>Back
+                </button>
+
+                <!-- Grid Navigator Row -->
+                <div class="flex items-center gap-2 overflow-x-auto py-1 px-2 max-w-md" id="bluebook-grid-strip">
+                    <!-- Numbers 1..N -->
+                </div>
+
+                <button onclick="nextBluebookQuestion()" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold">
+                    Next <i class="fa-solid fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="desmos-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="glass-panel rounded-3xl w-full max-w-2xl border border-slate-700 overflow-hidden shadow-2xl flex flex-col">
+            <div class="bg-slate-900 px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-calculator text-emerald-400"></i>
+                    <h3 class="font-bold text-white text-sm">Interactive Desmos Graphing Calculator</h3>
+                </div>
+                <button onclick="closeDesmosModal()" class="text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 space-y-4">
+                <!-- Expression Inputs -->
+                <div class="flex gap-2">
+                    <input type="text" id="desmos-input" value="y = 2x + 3" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-100 font-mono focus:outline-none focus:border-emerald-500" placeholder="e.g. y = x^2 - 4">
+                    <button onclick="plotDesmosExpression()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold">
+                        Plot Curve
+                    </button>
+                </div>
+
+                <!-- Interactive Graph Screen Plot Area -->
+                <div class="w-full h-64 bg-slate-950 rounded-2xl grid-bg border border-slate-800 relative flex items-center justify-center overflow-hidden">
+                    <div class="absolute inset-y-0 left-1/2 w-0.5 bg-slate-700"></div>
+                    <div class="absolute inset-x-0 top-1/2 h-0.5 bg-slate-700"></div>
+                    
+                    <svg class="absolute inset-0 w-full h-full" viewBox="0 0 400 250">
+                        <line x1="0" y1="200" x2="400" y2="50" stroke="#10b981" stroke-width="3" id="desmos-svg-line" />
+                        <circle cx="200" cy="125" r="5" fill="#38bdf8" />
+                    </svg>
+                    <span class="absolute bottom-3 right-3 text-3xs font-mono text-slate-500 bg-slate-900/80 px-2 py-1 rounded">X: [-10, 10] Y: [-10, 10]</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="formula-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="glass-panel rounded-3xl w-full max-w-3xl border border-slate-700 overflow-hidden shadow-2xl">
+            <div class="bg-slate-900 px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-square-root-variable text-blue-400"></i>
+                    <h3 class="font-bold text-white text-sm">Official Digital SAT Math Reference Sheet</h3>
+                </div>
+                <button onclick="closeFormulaSheetModal()" class="text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[70vh] overflow-y-auto">
+                <!-- Geometry Formulas -->
+                <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2">
+                    <h4 class="text-xs font-bold text-blue-400 uppercase tracking-wider">Area & Circumference</h4>
+                    <ul class="text-xs text-slate-300 font-mono space-y-1">
+                        <li>• Circle Area: A = πr²</li>
+                        <li>• Circle Circumference: C = 2πr</li>
+                        <li>• Rectangle Area: A = lw</li>
+                        <li>• Triangle Area: A = ½bh</li>
+                    </ul>
+                </div>
+
+                <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2">
+                    <h4 class="text-xs font-bold text-purple-400 uppercase tracking-wider">Right Triangles</h4>
+                    <ul class="text-xs text-slate-300 font-mono space-y-1">
+                        <li>• Pythagorean Theorem: c² = a² + b²</li>
+                        <li>• Special Right 30°-60°-90°: x, x√3, 2x</li>
+                        <li>• Special Right 45°-45°-90°: x, x, x√2</li>
+                    </ul>
+                </div>
+
+                <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2">
+                    <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wider">Volume Formulas</h4>
+                    <ul class="text-xs text-slate-300 font-mono space-y-1">
+                        <li>• Rectangular Prism Volume: V = lwh</li>
+                        <li>• Right Cylinder Volume: V = πr²h</li>
+                        <li>• Sphere Volume: V = ⁴⁄₃πr³</li>
+                        <li>• Cone Volume: V = ⅓πr²h</li>
+                    </ul>
+                </div>
+
+                <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2">
+                    <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wider">Circle Angles & Arc</h4>
+                    <ul class="text-xs text-slate-300 font-mono space-y-1">
+                        <li>• Total Degrees in Circle = 360°</li>
+                        <li>• Radians in Circle = 2π</li>
+                        <li>• Sum of angles in Triangle = 180°</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="score-modal" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-lg hidden flex items-center justify-center p-4">
+        <div class="glass-panel rounded-3xl w-full max-w-xl border border-slate-700 p-8 space-y-6 text-center">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 mx-auto flex items-center justify-center text-3xl text-white shadow-xl">
+                <i class="fa-solid fa-award"></i>
+            </div>
+
+            <div>
+                <h3 class="text-2xl font-black text-white">Mock Test Submitted!</h3>
+                <p class="text-xs text-slate-400 mt-1">Here is your scaled College Board Digital SAT Score</p>
+            </div>
+
+            <div class="py-4 bg-slate-900/80 rounded-2xl border border-slate-800 flex justify-center items-baseline gap-2">
+                <span id="final-mock-score" class="text-6xl font-black text-blue-400">1490</span>
+                <span class="text-slate-500 text-lg font-bold">/ 1600</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 text-left">
+                <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+                    <span class="text-xs text-slate-400 block mb-1">Math Section</span>
+                    <span id="final-math-score" class="text-xl font-bold text-emerald-400">770 / 800</span>
+                </div>
+                <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+                    <span class="text-xs text-slate-400 block mb-1">Accuracy</span>
+                    <span id="final-accuracy-score" class="text-xl font-bold text-purple-400">90%</span>
+                </div>
+            </div>
+
+            <button onclick="closeScoreModal()" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg transition-all">
+                Return to Dashboard & Review Answers
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const questionBank = [
+            {
+                id: "q1",
+                subject: "math",
+                domain: "algebra",
+                difficulty: "medium",
+                stem: "If 3x + 7 = 22, what is the value of 6x + 5?",
+                options: ["15", "30", "35", "40"],
+                correctIndex: 2,
+                explanation: "First solve for x in 3x + 7 = 22: subtract 7 from both sides to get 3x = 15, so x = 5. Next, substitute x = 5 into 6x + 5: 6(5) + 5 = 30 + 5 = 35.",
+                desmosShortcut: "In Desmos, type 3x + 7 = 22 to view the vertical line at x = 5. Then type 6(5) + 5 to immediately evaluate 35."
+            },
+            {
+                id: "q2",
+                subject: "math",
+                domain: "advanced_math",
+                difficulty: "hard",
+                stem: "The function f is defined by f(x) = (x - 3)(x + 7). What is the minimum value of f(x)?",
+                options: ["-25", "-21", "-16", "0"],
+                correctIndex: 0,
+                explanation: "The x-intercepts are at x = 3 and x = -7. The vertex occurs midpoint at x = (3 + (-7)) / 2 = -2. Evaluating f(-2) gives (-2 - 3)(-2 + 7) = (-5)(5) = -25.",
+                desmosShortcut: "Plot y = (x - 3)(x + 7) in Desmos. Click on the lowest point (vertex) on the parabola graph to read (x=-2, y=-25). The minimum value is -25."
+            },
+            {
+                id: "q3",
+                subject: "math",
+                domain: "geometry",
+                difficulty: "easy",
+                stem: "A circle in the xy-plane has its center at (2, -4) and a radius of 5. Which of the following is the equation of the circle?",
+                options: [
+                    "(x - 2)² + (y + 4)² = 25",
+                    "(x + 2)² + (y - 4)² = 25",
+                    "(x - 2)² + (y + 4)² = 5",
+                    "(x + 2)² + (y + 4)² = 25"
+                ],
+                correctIndex: 0,
+                explanation: "The standard equation of a circle is (x - h)² + (y - k)² = r². Substituting h = 2, k = -4, and r = 5 yields (x - 2)² + (y - (-4))² = 5², which simplifies to (x - 2)² + (y + 4)² = 25.",
+                desmosShortcut: "Graph option A in Desmos to see a circle centered at (2, -4) extending 5 units in each direction."
+            },
+            {
+                id: "q4",
+                subject: "reading",
+                domain: "craft_structure",
+                difficulty: "medium",
+                passage: "The following text is adapted from Jane Austen's 1813 novel Pride and Prejudice. Elizabeth Bennet possessed a lively, playful disposition, which delighted in anything ridiculous.",
+                stem: "As used in the text, what does the word 'disposition' most nearly mean?",
+                options: ["Arrangement", "Temperament", "Relinquishment", "Position"],
+                correctIndex: 1,
+                explanation: "In this context, 'disposition' refers to a person's inherent qualities of mind and character (temperament). Elizabeth's playful disposition refers to her cheerful personality.",
+                desmosShortcut: "N/A - Reading Craft & Structure concept."
+            },
+            {
+                id: "q5",
+                subject: "reading",
+                domain: "conventions",
+                difficulty: "easy",
+                passage: "The international research team published their findings on deep-sea bioluminescence _______ the study challenged long-held assumptions regarding underwater ecological adaptations.",
+                stem: "Which choice completes the text so that it conforms to the conventions of Standard English?",
+                options: ["; and", " ; ", " ; because", ", and"],
+                correctIndex: 0,
+                explanation: "Option A properly uses a semicolon followed by a coordinating conjunction or independent clause connector to join two full independent clauses.",
+                desmosShortcut: "N/A - Standard English Grammar."
+            }
+        ];
+
+        /* Vocab Flashcards Dataset */
+        const vocabCards = [
+            { word: "Anomalous", pos: "Adjective", definition: "Deviating from what is standard, normal, or expected.", example: "The researcher noted an anomalous spike in voltage." },
+            { word: "Fastidious", pos: "Adjective", definition: "Very attentive to and concerned about accuracy and detail.", example: "He was fastidious about keeping his test preparation organized." },
+            { word: "Pragmatic", pos: "Adjective", definition: "Dealing with things sensibly and realistically based on practical considerations.", example: "A pragmatic approach to solving math problems saves valuable time." },
+            { word: "Equivocal", pos: "Adjective", definition: "Open to more than one interpretation; ambiguous.", example: "The politician gave an equivocal answer during the debate." }
+        ];
+
+        let state = {
+            streak: 5,
+            targetScore: 1550,
+            solvedCount: 142,
+            accuracy: 82,
+            studyTime: 14.5,
+            flaggedIds: ["q2"],
+            userAnswers: {},
+            currentQBankIndex: 0,
+            filteredQuestions: [...questionBank],
+            currentVocabIndex: 0,
+            vocabMastery: [false, true, true, false],
+            // Bluebook Mock Exam state
+            bluebookIndex: 0,
+            bluebookAnswers: {},
+            bluebookFlags: {},
+            testTimerSeconds: 35 * 60,
+            timerInterval: null
+        };
+
+        /* Load from local storage if available */
+        function loadState() {
+            const saved = localStorage.getItem('prepSAT_state');
+            if (saved) {
+                try {
+                    state = { ...state, ...JSON.parse(saved) };
+                } catch(e) { console.error(e); }
+            }
+            updateHeaderUI();
+        }
+
+        function saveState() {
+            localStorage.setItem('prepSAT_state', JSON.stringify(state));
+            updateHeaderUI();
+        }
+
+        function updateHeaderUI() {
+            document.getElementById('header-streak-count').innerText = state.streak;
+            document.getElementById('header-target-score').innerText = state.targetScore;
+            document.getElementById('dash-total-solved').innerText = state.solvedCount;
+            document.getElementById('dash-accuracy').innerText = state.accuracy + '%';
+            document.getElementById('dash-study-time').innerText = state.studyTime;
+            document.getElementById('dash-flagged-count').innerText = state.flaggedIds.length;
+        }
+
+        function switchTab(tabId, subFilter = null) {
+            // Hide all view sections
+            ['dashboard', 'question-bank', 'flashcards'].forEach(id => {
+                const el = document.getElementById(`view-${id}`);
+                if (el) el.classList.add('hidden');
+            });
+
+            // Remove active classes on nav
+            document.querySelectorAll('.nav-link').forEach(btn => {
+                btn.classList.remove('text-blue-400', 'bg-blue-500/10', 'border', 'border-blue-500/20');
+                btn.classList.add('text-slate-400');
+            });
+
+            // Show target section
+            const target = document.getElementById(`view-${tabId}`);
+            if (target) target.classList.remove('hidden');
+
+            const activeNav = document.getElementById(`nav-${tabId}`);
+            if (activeNav) {
+                activeNav.classList.remove('text-slate-400');
+                activeNav.classList.add('text-blue-400', 'bg-blue-500/10', 'border', 'border-blue-500/20');
+            }
+
+            if (tabId === 'question-bank') {
+                if (subFilter === 'flagged') {
+                    document.getElementById('filter-status').value = 'flagged';
+                }
+                applyQuestionFilters();
+            } else if (tabId === 'flashcards') {
+                renderVocabCard();
+            }
+        }
+
+        function applyQuestionFilters() {
+            const subj = document.getElementById('filter-subject').value;
+            const domain = document.getElementById('filter-domain').value;
+            const diff = document.getElementById('filter-difficulty').value;
+            const status = document.getElementById('filter-status').value;
+
+            state.filteredQuestions = questionBank.filter(q => {
+                if (subj !== 'all' && q.subject !== subj) return false;
+                if (domain !== 'all' && q.domain !== domain) return false;
+                if (diff !== 'all' && q.difficulty !== diff) return false;
+                if (status === 'flagged' && !state.flaggedIds.includes(q.id)) return false;
+                if (status === 'unanswered' && state.userAnswers[q.id] !== undefined) return false;
+                return true;
+            });
+
+            if (state.filteredQuestions.length === 0) {
+                state.filteredQuestions = [...questionBank]; // Fallback
+            }
+
+            state.currentQBankIndex = 0;
+            renderCurrentQuestion();
+            renderQuestionNavigator();
+        }
+
+        function resetFilters() {
+            document.getElementById('filter-subject').value = 'all';
+            document.getElementById('filter-domain').value = 'all';
+            document.getElementById('filter-difficulty').value = 'all';
+            document.getElementById('filter-status').value = 'all';
+            applyQuestionFilters();
+        }
+
+        function renderCurrentQuestion() {
+            const q = state.filteredQuestions[state.currentQBankIndex];
+            if (!q) return;
+
+            // Badges
+            document.getElementById('q-subject-badge').innerText = q.subject.toUpperCase();
+            document.getElementById('q-domain-badge').innerText = q.domain.replace('_', ' ').toUpperCase();
+            document.getElementById('q-difficulty-badge').innerText = q.difficulty;
+
+            // Flag state
+            const isFlagged = state.flaggedIds.includes(q.id);
+            document.getElementById('flag-icon').className = isFlagged ? "fa-solid fa-bookmark text-rose-500" : "fa-regular fa-bookmark";
+            document.getElementById('flag-text').innerText = isFlagged ? "Flagged" : "Flag for Review";
+
+            // Passage
+            const passageBox = document.getElementById('passage-container');
+            if (q.passage) {
+                passageBox.classList.remove('hidden');
+                document.getElementById('q-passage-text').innerText = q.passage;
+            } else {
+                passageBox.classList.add('hidden');
+            }
+
+            // Stem
+            document.getElementById('q-stem-text').innerText = q.stem;
+
+            // Options
+            const container = document.getElementById('q-options-container');
+            container.innerHTML = '';
+
+            const selectedAnswer = state.userAnswers[q.id];
+
+            q.options.forEach((opt, idx) => {
+                const letter = String.fromCharCode(65 + idx);
+                const isSelected = selectedAnswer === idx;
+
+                const btn = document.createElement('button');
+                btn.onclick = () => selectQBankOption(idx);
+                btn.className = `w-full p-4 rounded-xl border text-left transition-all flex items-center justify-between ${
+                    isSelected 
+                        ? 'border-blue-500 bg-blue-500/10 text-white font-semibold' 
+                        : 'border-slate-800 bg-slate-900/60 text-slate-300 hover:border-slate-700'
+                }`;
+
+                btn.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="w-7 h-7 rounded-lg ${isSelected ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400'} font-bold text-xs flex items-center justify-center">${letter}</span>
+                        <span class="text-sm">${opt}</span>
+                    </div>
+                `;
+                container.appendChild(btn);
+            });
+
+            // Hide explanation panel until checked
+            document.getElementById('explanation-panel').classList.add('hidden');
+            renderQuestionNavigator();
+        }
+
+        function selectQBankOption(idx) {
+            const q = state.filteredQuestions[state.currentQBankIndex];
+            state.userAnswers[q.id] = idx;
+            saveState();
+            renderCurrentQuestion();
+        }
+
+        function checkAnswer() {
+            const q = state.filteredQuestions[state.currentQBankIndex];
+            const panel = document.getElementById('explanation-panel');
+            panel.classList.remove('hidden');
+
+            document.getElementById('explanation-text').innerText = q.explanation;
+            document.getElementById('desmos-shortcut-text').innerText = q.desmosShortcut || "N/A for Reading Questions.";
+
+            state.solvedCount++;
+            saveState();
+        }
+
+        function toggleFlagCurrentQuestion() {
+            const q = state.filteredQuestions[state.currentQBankIndex];
+            if (state.flaggedIds.includes(q.id)) {
+                state.flaggedIds = state.flaggedIds.filter(id => id !== q.id);
+            } else {
+                state.flaggedIds.push(q.id);
+            }
+            saveState();
+            renderCurrentQuestion();
+        }
+
+        function prevQuestion() {
+            if (state.currentQBankIndex > 0) {
+                state.currentQBankIndex--;
+                renderCurrentQuestion();
+            }
+        }
+
+        function nextQuestion() {
+            if (state.currentQBankIndex < state.filteredQuestions.length - 1) {
+                state.currentQBankIndex++;
+                renderCurrentQuestion();
+            }
+        }
+
+        function renderQuestionNavigator() {
+            const grid = document.getElementById('q-navigator-grid');
+            grid.innerHTML = '';
+
+            state.filteredQuestions.forEach((q, idx) => {
+                const btn = document.createElement('button');
+                btn.onclick = () => {
+                    state.currentQBankIndex = idx;
+                    renderCurrentQuestion();
+                };
+
+                const isCurrent = idx === state.currentQBankIndex;
+                const isAnswered = state.userAnswers[q.id] !== undefined;
+                const isFlagged = state.flaggedIds.includes(q.id);
+
+                btn.className = `h-9 rounded-lg font-bold text-xs flex items-center justify-center border transition-all ${
+                    isCurrent ? 'border-blue-500 bg-blue-600 text-white shadow-lg' :
+                    isAnswered ? 'bg-slate-800 text-slate-300 border-slate-700' :
+                    'bg-slate-900 text-slate-500 border-slate-800'
+                } ${isFlagged ? 'ring-2 ring-rose-500' : ''}`;
+
+                btn.innerText = idx + 1;
+                grid.appendChild(btn);
+            });
+        }
+
+        function switchExplanationTab(tab) {
+            const stepBtn = document.getElementById('tab-btn-step');
+            const desmosBtn = document.getElementById('tab-btn-desmos');
+            const stepContent = document.getElementById('explanation-step-content');
+            const desmosContent = document.getElementById('explanation-desmos-content');
+
+            if (tab === 'step-by-step') {
+                stepBtn.className = "pb-3 text-sm font-bold text-blue-400 border-b-2 border-blue-500";
+                desmosBtn.className = "pb-3 text-sm font-semibold text-slate-400 hover:text-slate-200";
+                stepContent.classList.remove('hidden');
+                desmosContent.classList.add('hidden');
+            } else {
+                desmosBtn.className = "pb-3 text-sm font-bold text-emerald-400 border-b-2 border-emerald-500";
+                stepBtn.className = "pb-3 text-sm font-semibold text-slate-400 hover:text-slate-200";
+                desmosContent.classList.remove('hidden');
+                stepContent.classList.add('hidden');
+            }
+        }
+
+        let cardFlipped = false;
+
+        function renderVocabCard() {
+            const card = vocabCards[state.currentVocabIndex];
+            document.getElementById('card-word').innerText = card.word;
+            document.getElementById('card-type').innerText = card.pos.toUpperCase();
+            document.getElementById('card-definition').innerText = card.definition;
+            document.getElementById('card-example').innerText = `"${card.example}"`;
+
+            const isMastered = state.vocabMastery[state.currentVocabIndex];
+            document.getElementById('card-status-badge').innerHTML = isMastered ? 
+                '<span class="text-emerald-400"><i class="fa-solid fa-check-circle mr-1"></i>Mastered</span>' :
+                '<span class="text-amber-400"><i class="fa-solid fa-clock-rotate-left mr-1"></i>Learning</span>';
+
+            // Reset Flip
+            cardFlipped = false;
+            document.getElementById('card-back-content').classList.add('hidden');
+
+            // Update Mastery Stat Counter
+            const masteredCount = state.vocabMastery.filter(Boolean).length;
+            document.getElementById('vocab-mastery-count').innerText = `${masteredCount} / ${vocabCards.length}`;
+        }
+
+        function flipFlashcard() {
+            cardFlipped = !cardFlipped;
+            const back = document.getElementById('card-back-content');
+            if (cardFlipped) {
+                back.classList.remove('hidden');
+            } else {
+                back.classList.add('hidden');
+            }
+        }
+
+        function nextVocabCard() {
+            state.currentVocabIndex = (state.currentVocabIndex + 1) % vocabCards.length;
+            renderVocabCard();
+        }
+
+        function prevVocabCard() {
+            state.currentVocabIndex = (state.currentVocabIndex - 1 + vocabCards.length) % vocabCards.length;
+            renderVocabCard();
+        }
+
+        function markVocabMastery(status) {
+            state.vocabMastery[state.currentVocabIndex] = status;
+            saveState();
+            renderVocabCard();
+        }
+
+        function startMockTestModal() {
+            document.getElementById('mock-test-modal').classList.remove('hidden');
+            state.bluebookIndex = 0;
+            state.testTimerSeconds = 35 * 60; // 35 minutes
+            startTestTimer();
+            renderBluebookQuestion();
+        }
+
+        function startTestTimer() {
+            if (state.timerInterval) clearInterval(state.timerInterval);
+            state.timerInterval = setInterval(() => {
+                state.testTimerSeconds--;
+                const mins = Math.floor(state.testTimerSeconds / 60);
+                const secs = state.testTimerSeconds % 60;
+                document.getElementById('test-timer-display').innerText = 
+                    `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+                if (state.testTimerSeconds <= 0) {
+                    clearInterval(state.timerInterval);
+                    submitMockTest();
+                }
+            }, 1000);
+        }
+
+        function toggleTimerVisibility() {
+            const display = document.getElementById('test-timer-display');
+            const icon = document.getElementById('timer-toggle-icon');
+            if (display.classList.contains('hidden')) {
+                display.classList.remove('hidden');
+                icon.className = "fa-solid fa-eye-slash";
+            } else {
+                display.classList.add('hidden');
+                icon.className = "fa-solid fa-eye";
+            }
+        }
+
+        function renderBluebookQuestion() {
+            const q = questionBank[state.bluebookIndex];
+            document.getElementById('bluebook-q-index').innerText = state.bluebookIndex + 1;
+            document.getElementById('bluebook-q-domain').innerText = `${q.subject.toUpperCase()} • ${q.domain.replace('_', ' ').toUpperCase()}`;
+            document.getElementById('bluebook-q-stem').innerText = q.stem;
+
+            // Flag
+            const isFlagged = state.bluebookFlags[q.id];
+            document.getElementById('bluebook-flag-icon').className = isFlagged ? "fa-solid fa-bookmark text-rose-500" : "fa-regular fa-bookmark";
+
+            // Options
+            const container = document.getElementById('bluebook-options-container');
+            container.innerHTML = '';
+
+            const selected = state.bluebookAnswers[q.id];
+
+            q.options.forEach((opt, idx) => {
+                const letter = String.fromCharCode(65 + idx);
+                const isSel = selected === idx;
+
+                const btn = document.createElement('button');
+                btn.onclick = () => {
+                    state.bluebookAnswers[q.id] = idx;
+                    renderBluebookQuestion();
+                };
+                btn.className = `w-full p-4 rounded-xl border text-left transition-all flex items-center gap-3 ${
+                    isSel ? 'border-blue-500 bg-blue-600/20 text-white font-semibold' : 'border-slate-800 bg-slate-900/80 text-slate-300'
+                }`;
+
+                btn.innerHTML = `
+                    <span class="w-6 h-6 rounded-full border border-slate-600 flex items-center justify-center text-xs font-bold ${isSel ? 'border-blue-400 bg-blue-500 text-white' : ''}">${letter}</span>
+                    <span class="text-sm">${opt}</span>
+                `;
+                container.appendChild(btn);
+            });
+
+            // Strip Navigator
+            const strip = document.getElementById('bluebook-grid-strip');
+            strip.innerHTML = '';
+            questionBank.forEach((qItem, i) => {
+                const navBtn = document.createElement('button');
+                navBtn.onclick = () => {
+                    state.bluebookIndex = i;
+                    renderBluebookQuestion();
+                };
+                const isAns = state.bluebookAnswers[qItem.id] !== undefined;
+                const isCur = i === state.bluebookIndex;
+
+                navBtn.className = `w-8 h-8 rounded-lg text-xs font-bold flex-shrink-0 transition-all ${
+                    isCur ? 'bg-blue-600 text-white ring-2 ring-blue-400' :
+                    isAns ? 'bg-slate-800 text-slate-300' : 'bg-slate-950 text-slate-600 border border-slate-800'
+                }`;
+                navBtn.innerText = i + 1;
+                strip.appendChild(navBtn);
+            });
+        }
+
+        function toggleBluebookFlag() {
+            const q = questionBank[state.bluebookIndex];
+            state.bluebookFlags[q.id] = !state.bluebookFlags[q.id];
+            renderBluebookQuestion();
+        }
+
+        function prevBluebookQuestion() {
+            if (state.bluebookIndex > 0) {
+                state.bluebookIndex--;
+                renderBluebookQuestion();
+            }
+        }
+
+        function nextBluebookQuestion() {
+            if (state.bluebookIndex < questionBank.length - 1) {
+                state.bluebookIndex++;
+                renderBluebookQuestion();
+            }
+        }
+
+        function submitMockTest() {
+            if (state.timerInterval) clearInterval(state.timerInterval);
+            document.getElementById('mock-test-modal').classList.add('hidden');
+            
+            // Calculate Score
+            let correct = 0;
+            questionBank.forEach(q => {
+                if (state.bluebookAnswers[q.id] === q.correctIndex) {
+                    correct++;
+                }
+            });
+
+            const total = questionBank.length;
+            const pct = Math.round((correct / total) * 100);
+            const scaledScore = 1200 + Math.round((correct / total) * 400);
+
+            document.getElementById('final-mock-score').innerText = scaledScore;
+            document.getElementById('final-accuracy-score').innerText = pct + '%';
+            document.getElementById('dash-predicted-score').innerText = scaledScore;
+
+            document.getElementById('score-modal').classList.remove('hidden');
+            saveState();
+        }
+
+        function closeScoreModal() {
+            document.getElementById('score-modal').classList.add('hidden');
+            switchTab('dashboard');
+        }
+
+        /* Desmos & Formula Modals */
+        function openDesmosModal() { document.getElementById('desmos-modal').classList.remove('hidden'); }
+        function closeDesmosModal() { document.getElementById('desmos-modal').classList.add('hidden'); }
+        function openFormulaSheetModal() { document.getElementById('formula-modal').classList.remove('hidden'); }
+        function closeFormulaSheetModal() { document.getElementById('formula-modal').classList.add('hidden'); }
+
+        function plotDesmosExpression() {
+            const val = document.getElementById('desmos-input').value;
+            // Simple visual response simulation
+            const line = document.getElementById('desmos-svg-line');
+            if (line) {
+                line.setAttribute('stroke', '#38bdf8');
+            }
+        }
+
+        function loadDailyQuestion() {
+            switchTab('question-bank');
+            state.currentQBankIndex = 0;
+            renderCurrentQuestion();
+        }
+
+        function openSettingsModal() {
+            if (confirm("Reset local progress data?")) {
+                localStorage.removeItem('prepSAT_state');
+                location.reload();
+            }
+        }
+
+        window.onload = function() {
+            loadState();
+            applyQuestionFilters();
+            renderVocabCard();
+        };
+    </script>
+</body>
+</html>
