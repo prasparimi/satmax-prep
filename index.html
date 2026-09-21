@@ -1,347 +1,278 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SATmax | Digital SAT Prep Engine</title>
-  <!-- Tailwind CSS -->
+  <title>Digital SAT Practice Platform</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            brand: {
-              50: '#f0fdf4',
-              500: '#22c55e',
-              600: '#16a34a',
-              700: '#15803d',
-              900: '#14532d'
-            }
-          }
-        }
-      }
-    }
-  </script>
-  <!-- FontAwesome Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- KaTeX for rendering math formulas -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
 </head>
-<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col">
+<body class="bg-gray-100 font-sans min-h-screen text-gray-800">
 
-  <!-- TOP HEADER -->
-  <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-50 px-6 py-3.5 flex justify-between items-center">
-    <div class="flex items-center space-x-3">
-      <div class="w-9 h-9 rounded-lg bg-gradient-to-tr from-emerald-500 to-blue-600 flex items-center justify-center font-black text-xl shadow-lg shadow-emerald-500/20 text-white">
-        ▲
-      </div>
-      <div>
-        <h1 class="text-xl font-black tracking-tight text-white flex items-center gap-2">
-          SATmax <span class="text-xs font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Digital SAT Engine</span>
-        </h1>
-      </div>
-    </div>
-
-    <!-- Quick Stats Bar -->
-    <div class="hidden md:flex items-center gap-6 text-sm">
-      <div class="flex items-center gap-2">
-        <i class="fa-solid fa-fire text-amber-500"></i>
-        <span class="text-slate-400">Streak:</span>
-        <span class="font-bold text-slate-200" id="streak-counter">5 Days</span>
-      </div>
-      <div class="flex items-center gap-2">
-        <i class="fa-solid fa-crosshair text-emerald-400"></i>
-        <span class="text-slate-400">Predicted Score:</span>
-        <span class="font-extrabold text-emerald-400" id="predicted-score">1480</span>
-      </div>
-      <button onclick="openModal('desmos-modal')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">
-        <i class="fa-solid fa-calculator text-blue-400"></i> Desmos Calculator
-      </button>
+  <!-- Header -->
+  <header class="bg-indigo-700 text-white p-4 shadow-md">
+    <div class="max-w-4xl mx-auto flex justify-between items-center">
+      <h1 class="text-xl font-bold tracking-wide">Digital SAT Practice Hub</h1>
+      <span id="api-status" class="text-xs bg-indigo-800 px-2.5 py-1 rounded-full border border-indigo-400">Loading API...</span>
     </div>
   </header>
 
-  <!-- MAIN CONTAINER -->
-  <main class="flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
+  <main class="max-w-4xl mx-auto p-4 my-6">
 
-    <!-- HERO / MOTIVATIONAL BANNER -->
-    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-950/40 via-slate-900 to-slate-900 border border-emerald-500/20 p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <!-- Filters Section -->
+    <div class="bg-white p-4 rounded-lg shadow mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
       <div>
-        <div class="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-1">Target Score: 1550+</div>
-        <h2 class="text-2xl font-bold text-white">Rise Above the Curve. Every Question Counts.</h2>
-        <p class="text-slate-400 text-sm mt-1">Master Digital SAT Reading, Writing, and Math through adaptive practice.</p>
+        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Section</label>
+        <select id="section-filter" class="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-indigo-500">
+          <option value="all">All Sections</option>
+          <option value="math">Math</option>
+          <option value="english">Reading & Writing</option>
+        </select>
       </div>
-      <div class="flex gap-3">
-        <button onclick="filterQuestions('math')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-semibold text-xs transition flex items-center gap-1.5">
-          <i class="fa-solid fa-calculator text-emerald-400"></i> Practice Math
-        </button>
-        <button onclick="filterQuestions('rw')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-semibold text-xs transition flex items-center gap-1.5">
-          <i class="fa-solid fa-book text-blue-400"></i> Practice R&W
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Difficulty</label>
+        <select id="difficulty-filter" class="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-indigo-500">
+          <option value="all">All Difficulties</option>
+          <option value="Easy">Easy</option>
+          <option value="Medium">Medium</option>
+          <option value="Hard">Hard</option>
+        </select>
+      </div>
+
+      <div class="flex items-end">
+        <button id="apply-filters-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded transition text-sm">
+          Fetch / Refresh Questions
         </button>
       </div>
     </div>
 
-    <!-- MAIN WORKSPACE -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      
-      <!-- QUESTION DISPLAY ENGINE (2 Columns) -->
-      <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col justify-between min-h-[500px]">
-        <div>
-          <!-- Header Controls & Filters -->
-          <div class="flex justify-between items-center mb-6 border-b border-slate-800 pb-4">
-            <h3 class="font-bold text-slate-200 text-lg flex items-center gap-2">
-              <i class="fa-solid fa-layer-group text-emerald-400"></i> Practice Module
-            </h3>
-            <div class="flex gap-2">
-              <select id="section-filter" onchange="handleFilterChange()" class="bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-1.5 focus:outline-none">
-                <option value="all">All Sections</option>
-                <option value="math">Math</option>
-                <option value="rw">Reading & Writing</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Loading State Indicator -->
-          <div id="loading-state" class="text-center py-20 text-slate-400 space-y-2">
-            <i class="fa-solid fa-circle-notch fa-spin text-3xl text-emerald-400"></i>
-            <p class="text-xs font-mono">Fetching question bank from question.json...</p>
-          </div>
-
-          <!-- Question Content Card (Hidden until loaded) -->
-          <div id="question-card" class="space-y-5 hidden">
-            <div class="flex justify-between items-center text-xs text-slate-400">
-              <span id="question-domain" class="font-mono text-emerald-400 font-semibold tracking-wide">MATH • ADVANCED ALGEBRA</span>
-              <span id="question-difficulty" class="px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 font-semibold">Hard</span>
-            </div>
-
-            <!-- Question Prompt Text -->
-            <div id="question-prompt" class="text-slate-100 text-base leading-relaxed font-medium"></div>
-
-            <!-- Answer Options -->
-            <div id="options-container" class="space-y-3 pt-2"></div>
-
-            <!-- Explanation Box -->
-            <div id="explanation-box" class="hidden p-4 rounded-xl bg-slate-800/90 border border-slate-700 text-sm space-y-2">
-              <div id="explanation-title" class="font-bold flex items-center gap-1.5"></div>
-              <p class="text-slate-300 text-xs leading-relaxed" id="explanation-text"></p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Action Footer -->
-        <div class="flex justify-between items-center border-t border-slate-800 pt-4 mt-6">
-          <button onclick="openModal('reference-modal')" class="text-xs text-slate-400 hover:text-slate-200 transition flex items-center gap-1.5">
-            <i class="fa-solid fa-book-open text-blue-400"></i> Reference Sheet
-          </button>
-          <button onclick="nextQuestion()" class="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs rounded-xl shadow-lg shadow-emerald-500/10 transition flex items-center gap-2">
-            Next Question <i class="fa-solid fa-arrow-right"></i>
-          </button>
-        </div>
+    <!-- Question Display Container -->
+    <div id="question-card" class="bg-white p-6 rounded-lg shadow-md hidden">
+      <!-- Question Header / Badges -->
+      <div class="flex justify-between items-center mb-4">
+        <span id="q-section" class="text-xs font-bold uppercase tracking-wider px-2 py-1 bg-indigo-100 text-indigo-700 rounded"></span>
+        <span id="q-difficulty" class="text-xs font-semibold px-2 py-1 bg-gray-100 text-gray-700 rounded"></span>
       </div>
 
-      <!-- ANALYTICS & MASTERY SIDEBAR (1 Column) -->
-      <div class="space-y-6">
-        
-        <!-- Domain Mastery Widget -->
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
-          <h3 class="font-bold text-slate-200 text-sm flex items-center gap-2">
-            <i class="fa-solid fa-chart-line text-blue-400"></i> Domain Mastery
-          </h3>
-          <div class="space-y-3.5 text-xs">
-            <div>
-              <div class="flex justify-between text-slate-400 mb-1.5">
-                <span>Algebra & Functions</span>
-                <span class="font-bold text-slate-200">88%</span>
-              </div>
-              <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                <div class="h-full bg-emerald-500 rounded-full" style="width: 88%"></div>
-              </div>
-            </div>
+      <!-- Question Text -->
+      <div id="q-prompt" class="text-gray-900 text-lg mb-6 leading-relaxed"></div>
 
-            <div>
-              <div class="flex justify-between text-slate-400 mb-1.5">
-                <span>Advanced Math</span>
-                <span class="font-bold text-slate-200">72%</span>
-              </div>
-              <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                <div class="h-full bg-emerald-500 rounded-full" style="width: 72%"></div>
-              </div>
-            </div>
+      <!-- Options List -->
+      <div id="q-options" class="space-y-3 mb-6"></div>
 
-            <div>
-              <div class="flex justify-between text-slate-400 mb-1.5">
-                <span>Information & Ideas (R&W)</span>
-                <span class="font-bold text-slate-200">94%</span>
-              </div>
-              <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                <div class="h-full bg-blue-500 rounded-full" style="width: 94%"></div>
-              </div>
-            </div>
-
-            <div>
-              <div class="flex justify-between text-slate-400 mb-1.5">
-                <span>Craft & Structure (R&W)</span>
-                <span class="font-bold text-slate-200">65%</span>
-              </div>
-              <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                <div class="h-full bg-amber-500 rounded-full" style="width: 65%"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Motivational Card -->
-        <div class="bg-gradient-to-br from-slate-900 to-slate-900/60 border border-slate-800 rounded-2xl p-5 shadow-xl text-center">
-          <i class="fa-solid fa-quote-left text-slate-700 text-2xl mb-2"></i>
-          <p class="text-xs text-slate-300 italic">"Consistency beats talent when talent doesn't practice daily."</p>
-          <div class="mt-3 text-[10px] text-emerald-400 font-semibold uppercase tracking-widest">— SATmax Daily Motivation</div>
-        </div>
-
+      <!-- Explanation Container (Hidden until answer selected) -->
+      <div id="explanation-box" class="mt-6 p-4 rounded bg-gray-50 border border-gray-200 hidden">
+        <h4 class="font-bold text-gray-800 mb-1">Explanation:</h4>
+        <p id="q-explanation" class="text-sm text-gray-700 leading-relaxed"></p>
       </div>
 
+      <!-- Action Buttons -->
+      <div class="mt-6 flex justify-between items-center pt-4 border-t border-gray-100">
+        <button id="prev-btn" class="px-4 py-2 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50">Previous</button>
+        <span id="q-counter" class="text-sm text-gray-500">Question 1 of 1</span>
+        <button id="next-btn" class="px-4 py-2 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700 disabled:opacity-50">Next</button>
+      </div>
     </div>
+
+    <!-- Loading State -->
+    <div id="loading-spinner" class="text-center py-12">
+      <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-indigo-600 border-t-transparent"></div>
+      <p class="mt-2 text-sm text-gray-500">Fetching practice questions...</p>
+    </div>
+
   </main>
 
-  <!-- DESMOS CALCULATOR MODAL -->
-  <div id="desmos-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-5 space-y-4 shadow-2xl">
-      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 class="font-bold text-white flex items-center gap-2">
-          <i class="fa-solid fa-calculator text-blue-400"></i> Desmos Graphing Calculator
-        </h3>
-        <button onclick="closeModal('desmos-modal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="h-80 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-center text-slate-500 text-sm">
-        [ Embedded Graphing Calculator Sandbox ]
-      </div>
-    </div>
-  </div>
-
-  <!-- REFERENCE SHEET MODAL -->
-  <div id="reference-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full p-5 space-y-4 shadow-2xl">
-      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 class="font-bold text-white flex items-center gap-2">
-          <i class="fa-solid fa-book-open text-emerald-400"></i> SAT Math Reference Sheet
-        </h3>
-        <button onclick="closeModal('reference-modal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="text-xs text-slate-300 space-y-2 font-mono">
-        <div class="p-2.5 bg-slate-950 rounded border border-slate-800">• Circle: Area = πr², Circumference = 2πr</div>
-        <div class="p-2.5 bg-slate-950 rounded border border-slate-800">• Rectangle: Area = lw</div>
-        <div class="p-2.5 bg-slate-950 rounded border border-slate-800">• Triangle: Area = ½bh</div>
-        <div class="p-2.5 bg-slate-950 rounded border border-slate-800">• Pythagorean Theorem: a² + b² = c²</div>
-        <div class="p-2.5 bg-slate-950 rounded border border-slate-800">• Special Triangles: 30°-60°-90° & 45°-45°-90°</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- SCRIPT & DYNAMIC FETCH LOGIC -->
   <script>
-    let rawQuestionBank = [];
-    let filteredQuestions = [];
+    // --- Direct Endpoint Setup ---
+    const API_ENDPOINT = 'https://pinesat.duckdns.org/api/questions';
+
+    // Local fallback questions in case third-party API is offline or restricted
+    const FALLBACK_QUESTIONS = [
+      {
+        id: 1,
+        section: "math",
+        difficulty: "Hard",
+        prompt: "If f(x) = 3x^2 - 12x + 7, what is the minimum value of f(x)?",
+        options: ["-5", "-2", "2", "7"],
+        correct: 0,
+        explanation: "The vertex x-coordinate of f(x) is x = -b/(2a) = 12/6 = 2. Substituting x = 2 yields f(2) = 3(4) - 24 + 7 = -5."
+      },
+      {
+        id: 2,
+        section: "english",
+        difficulty: "Medium",
+        prompt: "The researcher's analysis was ______, covering nearly every variable involved in the ecological shift.",
+        options: ["exhaustive", "superficial", "preliminary", "cursory"],
+        correct: 0,
+        explanation: "'Exhaustive' means comprehensive and thorough, perfectly matching the context of covering nearly every variable."
+      }
+    ];
+
+    let questions = [];
     let currentIndex = 0;
 
-    // Fetch question.json from repository
-    async function fetchQuestionsFromJSON() {
+    // DOM Elements
+    const qCard = document.getElementById('question-card');
+    const loadingSpinner = document.getElementById('loading-spinner');
+    const apiStatus = document.getElementById('api-status');
+    const sectionFilter = document.getElementById('section-filter');
+    const difficultyFilter = document.getElementById('difficulty-filter');
+    const applyFiltersBtn = document.getElementById('apply-filters-btn');
+
+    // Fetch Questions from Endpoint
+    async function loadQuestionsFromEndpoint() {
+      showLoading(true);
+      
+      const selectedSection = sectionFilter.value;
+      const selectedDifficulty = difficultyFilter.value;
+
+      // Construct endpoint URL with parameters
+      let url = API_ENDPOINT;
+      const params = new URLSearchParams();
+      
+      if (selectedSection !== 'all') {
+        params.append('section', selectedSection);
+      }
+      if (selectedDifficulty !== 'all') {
+        params.append('difficulty', selectedDifficulty);
+      }
+
+      if ([...params].length > 0) {
+        url += '?' + params.toString();
+      }
+
       try {
-        const response = await fetch('./question.json');
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
+        const response = await fetch(url, { method: 'GET' });
+        
+        if (!response.ok) throw new Error('API Response Error');
+
+        const data = await response.json();
+        
+        // Normalize response data structure
+        if (Array.isArray(data) && data.length > 0) {
+          questions = normalizeQuestions(data);
+          apiStatus.textContent = "Connected to Direct Endpoint";
+          apiStatus.className = "text-xs bg-green-800 text-green-100 px-2.5 py-1 rounded-full";
+        } else {
+          throw new Error('No data returned from API');
         }
-        rawQuestionBank = await response.json();
-        filteredQuestions = [...rawQuestionBank];
 
-        document.getElementById('loading-state').classList.add('hidden');
-        document.getElementById('question-card').classList.remove('hidden');
-
-        renderCurrentQuestion();
       } catch (error) {
-        console.error('Error fetching question.json:', error);
-        document.getElementById('loading-state').innerHTML = `
-          <div class="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
-            <i class="fa-solid fa-circle-exclamation text-lg mb-1"></i>
-            <p class="font-bold">Failed to load question.json</p>
-            <p class="text-[11px] mt-1 text-slate-400">Ensure <code>question.json</code> exists in the same root directory on GitHub.</p>
-          </div>
-        `;
-      }
-    }
-
-    function renderCurrentQuestion() {
-      if (filteredQuestions.length === 0) {
-        document.getElementById('question-prompt').innerText = "No questions found for this filter.";
-        document.getElementById('options-container').innerHTML = '';
-        return;
+        console.warn("Direct Endpoint failed, using fallback database:", error);
+        questions = FALLBACK_QUESTIONS;
+        apiStatus.textContent = "Offline / Fallback Data";
+        apiStatus.className = "text-xs bg-amber-800 text-amber-100 px-2.5 py-1 rounded-full";
       }
 
-      const q = filteredQuestions[currentIndex];
-      document.getElementById('question-domain').innerText = `${q.section.toUpperCase()} • ${q.domain}`;
-      document.getElementById('question-difficulty').innerText = q.difficulty;
-      document.getElementById('question-prompt').innerText = q.prompt;
-
-      const optionsBox = document.getElementById('options-container');
-      optionsBox.innerHTML = '';
-
-      const labels = ['A', 'B', 'C', 'D'];
-      q.options.forEach((opt, idx) => {
-        const btn = document.createElement('button');
-        btn.className = "w-full text-left p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/60 hover:border-emerald-500/50 hover:bg-slate-800 transition text-sm flex items-center gap-3";
-        btn.onclick = () => selectOption(idx, q.correct);
-        btn.innerHTML = `
-          <span class="w-6 h-6 rounded-full bg-slate-700 text-xs font-bold flex items-center justify-center text-slate-300 flex-shrink-0">${labels[idx]}</span>
-          <span class="text-slate-200">${opt}</span>
-        `;
-        optionsBox.appendChild(btn);
-      });
-
-      document.getElementById('explanation-box').classList.add('hidden');
-    }
-
-    function selectOption(selectedIdx, correctIdx) {
-      const expBox = document.getElementById('explanation-box');
-      const expTitle = document.getElementById('explanation-title');
-      const expText = document.getElementById('explanation-text');
-
-      expBox.classList.remove('hidden');
-      const q = filteredQuestions[currentIndex];
-      expText.innerText = q.explanation;
-
-      if (selectedIdx === correctIdx) {
-        expTitle.className = "font-bold text-emerald-400 flex items-center gap-1.5";
-        expTitle.innerHTML = '<i class="fa-solid fa-circle-check"></i> Correct!';
-      } else {
-        expTitle.className = "font-bold text-rose-400 flex items-center gap-1.5";
-        expTitle.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Incorrect';
-      }
-    }
-
-    function nextQuestion() {
-      if (filteredQuestions.length === 0) return;
-      currentIndex = (currentIndex + 1) % filteredQuestions.length;
-      renderCurrentQuestion();
-    }
-
-    function handleFilterChange() {
-      const filterVal = document.getElementById('section-filter').value;
-      filterQuestions(filterVal);
-    }
-
-    function filterQuestions(sectionType) {
-      document.getElementById('section-filter').value = sectionType;
-      if (sectionType === 'all') {
-        filteredQuestions = [...rawQuestionBank];
-      } else {
-        filteredQuestions = rawQuestionBank.filter(q => q.section === sectionType);
-      }
+      showLoading(false);
       currentIndex = 0;
       renderCurrentQuestion();
     }
 
-    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+    // Helper to format/normalize external API structures
+    function normalizeQuestions(rawList) {
+      return rawList.map((item, idx) => ({
+        id: item.id || idx + 1,
+        section: item.section || "General",
+        difficulty: item.difficulty || "Medium",
+        prompt: item.question ? (item.question.paragraph || item.question.prompt || item.prompt) : (item.prompt || "Question prompt unavailable."),
+        options: item.options || item.choices || ["Option A", "Option B", "Option C", "Option D"],
+        correct: item.correct !== undefined ? item.correct : 0,
+        explanation: item.explanation || "No explanation provided for this question."
+      }));
+    }
 
-    // Initialize application on load
-    window.addEventListener('DOMContentLoaded', fetchQuestionsFromJSON);
+    // Render Current Question to Screen
+    function renderCurrentQuestion() {
+      if (!questions || questions.length === 0) {
+        qCard.innerHTML = `<p class="text-center text-gray-500 py-8">No questions found for the selected filters.</p>`;
+        qCard.classList.remove('hidden');
+        return;
+      }
+
+      const q = questions[currentIndex];
+
+      document.getElementById('q-section').textContent = q.section;
+      document.getElementById('q-difficulty').textContent = q.difficulty;
+      document.getElementById('q-prompt').innerHTML = q.prompt;
+      document.getElementById('q-explanation').innerHTML = q.explanation;
+
+      // Hide explanation until user selects an answer
+      const expBox = document.getElementById('explanation-box');
+      expBox.classList.add('hidden');
+
+      // Render Options
+      const optionsContainer = document.getElementById('q-options');
+      optionsContainer.innerHTML = '';
+
+      q.options.forEach((opt, index) => {
+        const btn = document.createElement('button');
+        btn.className = "w-full text-left p-3 rounded border border-gray-200 hover:border-indigo-500 hover:bg-indigo-50 transition flex items-center justify-between";
+        btn.innerHTML = `<span class="font-semibold mr-3">${String.fromCharCode(65 + index)}.</span> <span>${opt}</span>`;
+        
+        btn.onclick = () => handleOptionClick(index, q.correct, btn);
+        optionsContainer.appendChild(btn);
+      });
+
+      // Update Navigation
+      document.getElementById('q-counter').textContent = `Question ${currentIndex + 1} of ${questions.length}`;
+      document.getElementById('prev-btn').disabled = currentIndex === 0;
+      document.getElementById('next-btn').disabled = currentIndex === questions.length - 1;
+
+      qCard.classList.remove('hidden');
+    }
+
+    // Handle Option Selection
+    function handleOptionClick(selectedIndex, correctIndex, buttonEl) {
+      const allButtons = document.getElementById('q-options').children;
+
+      // Disable further clicks on current question
+      Array.from(allButtons).forEach((b, idx) => {
+        b.disabled = true;
+        if (idx === correctIndex) {
+          b.className = "w-full text-left p-3 rounded border border-green-500 bg-green-50 text-green-900 font-medium flex items-center justify-between";
+        }
+      });
+
+      if (selectedIndex !== correctIndex) {
+        buttonEl.className = "w-full text-left p-3 rounded border border-red-500 bg-red-50 text-red-900 font-medium flex items-center justify-between";
+      }
+
+      // Show explanation
+      document.getElementById('explanation-box').classList.remove('hidden');
+    }
+
+    function showLoading(isLoading) {
+      if (isLoading) {
+        loadingSpinner.classList.remove('hidden');
+        qCard.classList.add('hidden');
+      } else {
+        loadingSpinner.classList.add('hidden');
+      }
+    }
+
+    // Event Listeners
+    document.getElementById('prev-btn').addEventListener('click', () => {
+      if (currentIndex > 0) {
+        currentIndex--;
+        renderCurrentQuestion();
+      }
+    });
+
+    document.getElementById('next-btn').addEventListener('click', () => {
+      if (currentIndex < questions.length - 1) {
+        currentIndex++;
+        renderCurrentQuestion();
+      }
+    });
+
+    applyFiltersBtn.addEventListener('click', loadQuestionsFromEndpoint);
+
+    // Initial Load
+    window.addEventListener('DOMContentLoaded', loadQuestionsFromEndpoint);
   </script>
 </body>
 </html>
